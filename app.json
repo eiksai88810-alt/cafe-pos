@@ -1,15 +1,16 @@
 {
   "expo": {
-    "name": "pos-app",
-    "slug": "pos-app",
+    "name": "Waiter POS",
+    "slug": "waiter-pos",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "posapp",
+    "scheme": "waiterpos",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.waiterpos.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,6 +19,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "com.waiterpos.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -38,11 +40,23 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6c65847c-5b63-411a-aa95-295d7d4bf59c"
+      }
+    },
+    "owner": "akari12"
   }
 }

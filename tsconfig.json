@@ -5,6 +5,15 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@/store/*": [
+        "./src/store/*"
+      ],
+      "@/api/*": [
+        "./src/api/*"
+      ],
+      "@/types": [
+        "./src/types"
       ]
     }
   },
