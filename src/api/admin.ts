@@ -38,7 +38,12 @@ function getDevelopmentHost() {
 
 function getAdminApiBaseUrl() {
   const configuredUrl =
-    process.env['API-URL_']?.trim() ?? process.env.EXPO_PUBLIC_POS_ADMIN_API_URL?.trim();
+    process.env.EXPO_PUBLIC_API_URL?.trim() ??
+    process.env.API_URL?.trim() ??
+    process.env.EXPO_PUBLIC_API_URL_?.trim() ??
+    process.env.API_URL_?.trim() ??
+    process.env.EXPO_PUBLIC_POS_ADMIN_API_URL?.trim() ??
+    process.env['API-URL_']?.trim();
 
   if (configuredUrl) {
     return configuredUrl.replace(/\/$/, '');
