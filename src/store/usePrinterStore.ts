@@ -109,7 +109,7 @@ export const usePrinterStore = create<PrinterState>((set, get) => ({
       paperWidth: settings.paperWidth ?? '58mm',
       queue,
       status: isBluetoothPrinterSupported() ? 'disconnected' : 'unsupported',
-      error: isBluetoothPrinterSupported() ? null : 'Install a dev build with react-native-bluetooth-escpos-printer.',
+      error: isBluetoothPrinterSupported() ? null : 'Bluetooth printer module not available in this build.',
     });
   },
 

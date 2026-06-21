@@ -67,7 +67,7 @@ export default function PrinterSetupScreen() {
             {error}
           </ThemedText>
           <ThemedText style={styles.noticeBody}>
-            Install a dev-client build with react-native-bluetooth-escpos-printer for real Bluetooth printing.
+            A dev-client build with a Bluetooth ESC/POS library (e.g. react-native-esc-pos-printer) is required for printing.
           </ThemedText>
         </ThemedView>
       )}
