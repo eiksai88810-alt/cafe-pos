@@ -8,6 +8,7 @@ import { Colors } from '@/constants/theme';
 import { useRouter } from 'expo-router';
 import { useStore } from '@/store/useStore';
 import { Order } from '@/types';
+import { PrinterStatusButton } from '@/components/printer-status-button';
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -115,6 +116,10 @@ export default function OrdersScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <View style={styles.header}>
+        <ThemedText type="title">Orders</ThemedText>
+        <PrinterStatusButton />
+      </View>
       {activeOrders.length === 0 ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
@@ -158,6 +163,13 @@ const styles = StyleSheet.create({
   },
   centerText: {
     textAlign: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 8,
   },
   loadingText: {
     marginTop: 16,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, TouchableOpacity, FlatList, ActivityIndicator, TextInput, StyleSheet } from 'react-native';
+import { Alert, View, TouchableOpacity, FlatList, ActivityIndicator, TextInput, StyleSheet } from 'react-native';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -8,6 +8,8 @@ import { Colors } from '@/constants/theme';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useStore } from '@/store/useStore';
 import { MenuItem, OrderItem, Order } from '@/types';
+import { PrinterStatusButton } from '@/components/printer-status-button';
+import { usePrinterStore } from '@/store/usePrinterStore';
 
 const MOCK_MENU_ITEMS: MenuItem[] = [
   { id: '1', name: 'Caesar Salad', description: 'Fresh romaine with parmesan and croutons', price: 12.99, category: 'Starters', isAvailable: true },
@@ -21,7 +23,8 @@ const MOCK_MENU_ITEMS: MenuItem[] = [
 export default function NewOrderScreen() {
   const router = useRouter();
   const { tableId } = useLocalSearchParams() as { tableId?: string };
-  const { user, setActiveOrders } = useStore();
+  const { user, addOrder } = useStore();
+  const { printOrder, skipQueuedJob } = usePrinterStore();
   const colorScheme = useColorScheme();
   
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -112,7 +115,7 @@ export default function NewOrderScreen() {
   };
 
   const handlePlaceOrder = async () => {
-    if (!selectedItems.length || !tableId) return;
+    if (!selectedItems.length || !tableId || !user) return;
     
     try {
       setLoading(true);
@@ -127,7 +130,24 @@ export default function NewOrderScreen() {
         updatedAt: new Date().toISOString()
       };
       
-      setActiveOrders(prev => [...prev, newOrder]);
+      addOrder(newOrder);
+
+      const printResult = await printOrder(newOrder, user.name);
+      if (printResult.status === 'queued') {
+        Alert.alert('Printer not connected', `${printResult.message}\n\nKitchen ticket has been queued.`, [
+          {
+            text: 'Skip Printing',
+            style: 'destructive',
+            onPress: () => skipQueuedJob(printResult.jobId),
+          },
+          {
+            text: 'Open Printer Setup',
+            onPress: () => router.push('/printer'),
+          },
+          { text: 'Keep Queued' },
+        ]);
+      }
+
       router.replace(`/order/${newOrder.id}`);
     } catch (error) {
       console.error('Failed to place order:', error);
@@ -156,14 +176,17 @@ export default function NewOrderScreen() {
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.headerTitle}>
-          New Order
-        </ThemedText>
-        {tableId && (
-          <ThemedText style={styles.headerTable}>
-            Table #{tableId}
+        <View>
+          <ThemedText type="title" style={styles.headerTitle}>
+            New Order
           </ThemedText>
-        )}
+          {tableId && (
+            <ThemedText style={styles.headerTable}>
+              Table #{tableId}
+            </ThemedText>
+          )}
+        </View>
+        <PrinterStatusButton />
       </ThemedView>
       
       <ThemedView style={styles.content}>
@@ -296,10 +319,11 @@ export default function NewOrderScreen() {
                 onPress={handlePlaceOrder}
                 style={[
                   styles.placeOrderButton,
+                  { backgroundColor: Colors[colorScheme ?? 'light'].tint },
                   selectedItems.length === 0 && styles.placeOrderButtonDisabled
                 ]}
               >
-                <ThemedText style={styles.placeOrderButtonText}>
+                <ThemedText style={[styles.placeOrderButtonText, { color: Colors[colorScheme ?? 'light'].background }]}>
                   Place Order
                 </ThemedText>
               </TouchableOpacity>
@@ -324,13 +348,17 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
   headerTitle: {
-    textAlign: 'center',
+    textAlign: 'left',
   },
   headerTable: {
     marginTop: 4,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   content: {
     flex: 1,

@@ -21,6 +21,8 @@ const MAPPING: Record<string, MaterialIconName> = {
   plus: 'add',
   'trash.fill': 'delete',
   'clock.fill': 'schedule',
+  'printer.fill': 'print',
+  'antenna.radiowaves.left.and.right': 'bluetooth',
   'key.fill': 'vpn-key',
   'calendar.fill': 'calendar-today',
   'rectangle.portrait.and.arrow.forward': 'logout',

@@ -9,6 +9,9 @@
       "@/store/*": [
         "./src/store/*"
       ],
+      "@/printing/*": [
+        "./src/printing/*"
+      ],
       "@/api/*": [
         "./src/api/*"
       ],

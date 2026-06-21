@@ -28,6 +28,7 @@ export default function RootLayout() {
           <Stack.Screen name="order/[id]" options={{ title: 'Order Details' }} />
           <Stack.Screen name="order/new" options={{ title: 'New Order' }} />
           <Stack.Screen name="payment/confirm" options={{ title: 'Payment' }} />
+          <Stack.Screen name="printer" options={{ title: 'Kitchen Printer' }} />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>

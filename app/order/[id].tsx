@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, TouchableOpacity, FlatList, ActivityIndicator, Modal, StyleSheet } from 'react-native';
+import { Alert, View, TouchableOpacity, FlatList, ActivityIndicator, Modal, StyleSheet } from 'react-native';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -7,13 +7,17 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useStore } from '@/store/useStore';
-import { Order, OrderItem } from '@/types';
+import { Order } from '@/types';
+import { PrinterStatusButton } from '@/components/printer-status-button';
+import { usePrinterStore } from '@/store/usePrinterStore';
 
 export default function OrderDetailScreen() {
   const router = useRouter();
-  const { orderId } = useLocalSearchParams() as { orderId: string };
+  const { id, orderId: legacyOrderId } = useLocalSearchParams() as { id?: string; orderId?: string };
+  const orderId = id ?? legacyOrderId ?? '';
   const colorScheme = useColorScheme();
-  const { activeOrders, setActiveOrders, user } = useStore();
+  const { activeOrders, updateOrder, user } = useStore();
+  const { printOrder, skipQueuedJob } = usePrinterStore();
   const [order, setOrder] = useState<Order | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -60,7 +64,7 @@ export default function OrderDetailScreen() {
     };
     
     setOrder(updatedOrder);
-    setActiveOrders(prev => prev.map(o => o.id === orderId ? updatedOrder : o));
+    updateOrder(orderId, updatedOrder);
   };
 
   const handleOpenPaymentModal = () => {
@@ -75,11 +79,39 @@ export default function OrderDetailScreen() {
   const handleCompletePayment = () => {
     if (!order) return;
     
-    const updatedOrder = { ...order, status: 'paid' };
+    const updatedOrder: Order = { ...order, status: 'paid' };
     setOrder(updatedOrder);
-    setActiveOrders(prev => prev.map(o => o.id === orderId ? updatedOrder : o));
+    updateOrder(orderId, updatedOrder);
     handleClosePaymentModal();
     router.replace('/(tabs)/tables');
+  };
+
+  const handleReprintKitchenTicket = async () => {
+    if (!order || !user) return;
+
+    const result = await printOrder(order, user.name);
+    if (result.status === 'printed') {
+      Alert.alert('Printed', 'Kitchen ticket sent to the printer.');
+      return;
+    }
+
+    if (result.status === 'queued') {
+      Alert.alert('Printer not connected', `${result.message}\n\nKitchen ticket has been queued.`, [
+        {
+          text: 'Skip Printing',
+          style: 'destructive',
+          onPress: () => skipQueuedJob(result.jobId),
+        },
+        {
+          text: 'Open Printer Setup',
+          onPress: () => router.push('/printer'),
+        },
+        { text: 'Keep Queued' },
+      ]);
+      return;
+    }
+
+    Alert.alert('Print failed', result.message);
   };
 
   if (!order) {
@@ -97,10 +129,15 @@ export default function OrderDetailScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
-        <ThemedText type="title">Order Details</ThemedText>
+        <View>
+          <ThemedText type="title">Order Details</ThemedText>
+          <View style={styles.timeContainer}>
+            <IconSymbol name="clock.fill" size={16} color={Colors[colorScheme ?? 'light'].tint} />
+            <ThemedText style={styles.timeText}>{timeAgo}</ThemedText>
+          </View>
+        </View>
         <View style={styles.timeContainer}>
-          <IconSymbol name="clock.fill" size={16} color={Colors[colorScheme ?? 'light'].tint} />
-          <ThemedText style={styles.timeText}>{timeAgo}</ThemedText>
+          <PrinterStatusButton />
         </View>
       </View>
 
@@ -202,6 +239,16 @@ export default function OrderDetailScreen() {
           <ThemedText type="title">${formattedTotal}</ThemedText>
         </View>
       </ThemedView>
+
+      <TouchableOpacity
+        onPress={handleReprintKitchenTicket}
+        style={[styles.reprintButton, { backgroundColor: Colors[colorScheme ?? 'light'].tint }]}
+      >
+        <IconSymbol name="printer.fill" size={20} color={Colors[colorScheme ?? 'light'].background || '#fff'} />
+        <ThemedText style={[styles.reprintButtonText, { color: Colors[colorScheme ?? 'light'].background }]}>
+          Reprint Kitchen Ticket
+        </ThemedText>
+      </TouchableOpacity>
 
       {!isEditing && (
         <View style={styles.tipSection}>
@@ -448,9 +495,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   summaryCard: {
-    marginBottom: 24,
+    marginBottom: 12,
     padding: 12,
     borderRadius: 8,
+  },
+  reprintButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  reprintButtonText: {
+    fontWeight: '700',
   },
   summaryRow: {
     flexDirection: 'row',

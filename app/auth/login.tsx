@@ -62,7 +62,7 @@ export default function LoginScreen() {
       }
     } catch (error) {
       console.error('Login failed:', error);
-      setError('Login failed. Please try again.');
+      setError(error instanceof Error ? error.message : 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

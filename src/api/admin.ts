@@ -62,14 +62,22 @@ function mapRole(role: string): User['role'] {
 
 export async function loginWaiterWithPin(pin: string): Promise<{ token: string; user: User }> {
   const normalizedPin = pin.replace(/\D/g, '').slice(0, 4);
+  const apiBaseUrl = getAdminApiBaseUrl();
 
-  const response = await fetch(`${getAdminApiBaseUrl()}/api/waiter/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ pin: normalizedPin }),
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${apiBaseUrl}/api/waiter/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ pin: normalizedPin }),
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'Network request failed';
+    throw new ApiError(`Cannot reach POS admin API at ${apiBaseUrl}. ${reason}`, 0);
+  }
 
   const data = await response.json().catch(() => null);
 
